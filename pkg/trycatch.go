@@ -35,7 +35,7 @@ func (trial *trial[TOutput]) Catch() error {
 	return nil
 }
 
-func Continue[TInput any, TOutput any](trial *trial[TOutput], fn func(arg TInput) (any, error)) {
+func Then[TInput any, TOutput any](trial *trial[TOutput], fn func(arg TInput) (any, error)) {
 	trial.functions = append(trial.functions, func(arg any) (any, error) {
 		if arg == nil {
 			_arg := new(TInput)
