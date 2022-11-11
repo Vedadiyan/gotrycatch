@@ -1,12 +1,12 @@
 package gotrycatch
 
-type trial[TOutput any] struct {
+type trial struct {
 	functions []func(arg any) (any, error)
 	result    any
 }
 
-func Try[TOutput any](fn func() (any, error)) *trial[TOutput] {
-	trial := &trial[TOutput]{
+func Try[TOutput any](fn func() (any, error)) *trial {
+	trial := &trial{
 		functions: make([]func(arg any) (any, error), 0),
 	}
 	trial.functions = append(trial.functions, func(arg any) (any, error) {
@@ -15,14 +15,14 @@ func Try[TOutput any](fn func() (any, error)) *trial[TOutput] {
 	return trial
 }
 
-func (trial trial[TOutput]) UnWrap() TOutput {
+func UnWrap[TOutput any](trial *trial) TOutput {
 	if out, ok := trial.result.(TOutput); ok {
 		return out
 	}
 	return *new(TOutput)
 }
 
-func (trial *trial[TOutput]) Catch() error {
+func (trial *trial) Catch() error {
 	var _arg any
 	for _, value := range trial.functions {
 		res, err := value(_arg)
@@ -35,14 +35,9 @@ func (trial *trial[TOutput]) Catch() error {
 	return nil
 }
 
-func Then[TInput any, TOutput any](trial *trial[TOutput], fn func(arg TInput) (any, error)) {
+func (trial *trial) Then(fn func(arg any) (any, error)) {
 	trial.functions = append(trial.functions, func(arg any) (any, error) {
-		if arg == nil {
-			_arg := new(TInput)
-			res, err := fn(*_arg)
-			return res, err
-		}
-		res, err := fn(arg.(TInput))
+		res, err := fn(arg)
 		return res, err
 	})
 }
