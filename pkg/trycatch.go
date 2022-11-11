@@ -3,18 +3,17 @@ package gotrycatch
 import "fmt"
 
 type trial struct {
-	functions []func(arg any) (any, error)
-	result    any
-	err       error
+	fn            func() (any, error)
+	thenFunctions []func(arg any) (any, error)
+	result        any
+	err           error
 }
 
 func Try(fn func() (any, error)) *trial {
 	trial := &trial{
-		functions: make([]func(arg any) (any, error), 0),
+		thenFunctions: make([]func(arg any) (any, error), 0),
 	}
-	trial.functions = append(trial.functions, func(arg any) (any, error) {
-		return fn()
-	})
+	trial.fn = fn
 	return trial
 }
 
@@ -35,8 +34,12 @@ func (trial *trial) run() {
 			trial.err = fmt.Errorf("%v", recover)
 		}
 	}()
-	var _arg any
-	for _, value := range trial.functions {
+	_arg, err := trial.fn()
+	if err != nil {
+		trial.err = err
+		return
+	}
+	for _, value := range trial.thenFunctions {
 		res, err := value(_arg)
 		if err != nil {
 			trial.err = err
@@ -48,7 +51,7 @@ func (trial *trial) run() {
 }
 
 func (trial *trial) Then(fn func(arg any) (any, error)) {
-	trial.functions = append(trial.functions, func(arg any) (any, error) {
+	trial.thenFunctions = append(trial.thenFunctions, func(arg any) (any, error) {
 		res, err := fn(arg)
 		return res, err
 	})
