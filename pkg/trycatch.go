@@ -8,7 +8,7 @@ type trial struct {
 	err       error
 }
 
-func Try[TOutput any](fn func() (any, error)) *trial {
+func Try(fn func() (any, error)) *trial {
 	trial := &trial{
 		functions: make([]func(arg any) (any, error), 0),
 	}
