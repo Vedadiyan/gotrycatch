@@ -5,10 +5,13 @@ type trial[TOutput any] struct {
 	result    any
 }
 
-func Try[TOutput any]() *trial[TOutput] {
+func Try[TOutput any](fn func() (any, error)) *trial[TOutput] {
 	trial := &trial[TOutput]{
 		functions: make([]func(arg any) (any, error), 0),
 	}
+	trial.functions = append(trial.functions, func(arg any) (any, error) {
+		return fn()
+	})
 	return trial
 }
 
