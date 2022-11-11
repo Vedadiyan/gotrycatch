@@ -1,8 +1,11 @@
 package gotrycatch
 
+import "fmt"
+
 type trial struct {
 	functions []func(arg any) (any, error)
 	result    any
+	err       error
 }
 
 func Try[TOutput any](fn func() (any, error)) *trial {
@@ -15,24 +18,33 @@ func Try[TOutput any](fn func() (any, error)) *trial {
 	return trial
 }
 
-func UnWrap[TOutput any](trial *trial) TOutput {
-	if out, ok := trial.result.(TOutput); ok {
-		return out
+func UnWrap[TOutput any](trial *trial) (*TOutput, error) {
+	trial.run()
+	if trial.err != nil {
+		return nil, trial.err
 	}
-	return *new(TOutput)
+	if out, ok := trial.result.(TOutput); ok {
+		return &out, nil
+	}
+	return nil, fmt.Errorf("invalid cast")
 }
 
-func (trial *trial) Catch() error {
+func (trial *trial) run() {
+	defer func() {
+		if recover := recover(); recover != nil {
+			trial.err = fmt.Errorf("%v", recover)
+		}
+	}()
 	var _arg any
 	for _, value := range trial.functions {
 		res, err := value(_arg)
 		if err != nil {
-			return err
+			trial.err = err
+			return
 		}
 		_arg = res
 	}
 	trial.result = _arg
-	return nil
 }
 
 func (trial *trial) Then(fn func(arg any) (any, error)) {
