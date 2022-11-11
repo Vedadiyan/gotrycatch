@@ -1,3 +1,3 @@
-module github.com/vedadiyan/gostepper
+module github.com/vedadiyan/gotryatch
 
 go 1.19
